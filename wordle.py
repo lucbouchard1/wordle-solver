@@ -2,11 +2,23 @@ import pandas as pd
 import argparse, re
 
 def makeWordDict(n, dictionaryFile):
+    """Create a dictionary of words of length 'n'.
+    
+    Parameters:
+    n              -- length of the dictionary words.
+    dictionaryFile -- dictionary file to use.
+    """
     words = pd.read_csv(dictionaryFile, names=['word'])
     words['word'] = words.word.str.lower()
     return words[words.word.str.len() == n]
 
 def getBoringScores(words):
+    """Compute boring scores for a dictionary of words. All words must be
+    the same length.
+    
+    Parameters:
+    words -- pandas dictionary of words.
+    """
     # Split into table of characters
     chars = words.word.str.split('', expand=True).drop(labels=[0, 6], axis=1)
     # Flatten table and count discrete values
@@ -16,6 +28,17 @@ def getBoringScores(words):
     return boringScore.join(words), charProbs
 
 def stepWordTable(tbl, include=[], exclude=[], inplace=[], guess=None):
+    """Filter a word dictionary by the given criteria.
+    
+    Parameters:
+    tbl     -- word dictionary.
+    include -- list of characters that must be included in the table words.
+    exclude -- list of characters that cannot appear in the table words.
+    inplace -- one-for-one list of characters that must appear in a certain place. None
+                if it doesn't matter. e.g. [None, 'h', None, None, None] will require an
+                'h' char in index 1.
+    guess   -- the previous guess, which should be removed from the table.
+    """
     eRgx = re.compile(f"[{''.join(exclude)}]") if len(exclude) > 0 else None
     inPRgx = re.compile(''.join(['.' if c is None else c for c in inplace]))
 
@@ -29,6 +52,7 @@ def stepWordTable(tbl, include=[], exclude=[], inplace=[], guess=None):
     return tbl[conds], (~conds).sum()
 
 def checkWordleGuess(guess, word):
+    """Check if a Wordle guess is correct and return character info"""
     correct = guess == word
     inWord = list(filter(None, [c if c in word else None for c in guess]))
     notInWord = list(set(guess) - set(inWord))
@@ -36,6 +60,12 @@ def checkWordleGuess(guess, word):
     return (correct, inWord, notInWord, inPlace)
 
 def solveWordle(boringScores, word):
+    """Run the Wordle solver to find a given word.
+    
+    Parameters:
+    boringScores -- table of words and their boring scores.
+    word         -- the winning word of the Wordle.
+    """
     tbl = boringScores
     log = []
     included = []
