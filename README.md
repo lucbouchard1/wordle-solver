@@ -23,3 +23,5 @@ Solved the Wordle in 5 steps!
 To solve the Wordle, the program computes a character frequency distribution from the word dictionary. It then computes the "boring score" for each word in the dictionary--the sum of frequencies for each character in the word, ignoring repeated characters (i.e. how boring the characters in the word are).
 
 With the boring scores computed, the program selects the most boring word, makes the guess, filters the dictionary based on the character information Wordle returns, then repeats.
+
+This idea behind this approach is maximizing the information gained in each iteration. By using words with characters that appear often, we're more likely to end up finding characters that are in the target word.
