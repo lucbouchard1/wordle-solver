@@ -20,7 +20,8 @@ def getBoringScores(words):
     words -- pandas dictionary of words.
     """
     # Split into table of characters
-    chars = words.word.str.split('', expand=True).drop(labels=[0, 6], axis=1)
+    chars = words.word.str.split('', expand=True)
+    chars = chars.drop(labels=[0, chars.shape[1]-1], axis=1)
     # Flatten table and count discrete values
     charProbs = chars.stack().value_counts(normalize=True)
     
