@@ -4,7 +4,7 @@ import argparse, re
 def makeWordDict(n, dictionaryFile):
     words = pd.read_csv(dictionaryFile, names=['word'])
     words['word'] = words.word.str.lower()
-    return words.where(words.word.str.len() == n).dropna()
+    return words[words.word.str.len() == n]
 
 def getBoringScores(words):
     # Split into table of characters
@@ -16,14 +16,17 @@ def getBoringScores(words):
     return boringScore.join(words), charProbs
 
 def stepWordTable(tbl, include=[], exclude=[], inplace=[], guess=None):
+    eRgx = re.compile(f"[{''.join(exclude)}]") if len(exclude) > 0 else None
+    inPRgx = re.compile(''.join(['.' if c is None else c for c in inplace]))
+
     conds = tbl.word.apply(lambda word: \
             all([c in word for c in include]) and \
-            not bool(re.search(f"[{''.join(exclude)}]", word)) and \
-            all([c is None or c == w for c,w in zip(inplace, word)]) and \
+            (len(exclude) == 0 or not bool(eRgx.search(word))) and \
+            bool(inPRgx.search(word)) and \
             word != guess
         )
 
-    return tbl.where(conds).dropna(), (~conds).sum()
+    return tbl[conds], (~conds).sum()
 
 def checkWordleGuess(guess, word):
     correct = guess == word
