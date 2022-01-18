@@ -1,5 +1,5 @@
 import pandas as pd
-import argparse
+import argparse, re
 
 def makeWordDict(n, dictionaryFile):
     words = pd.read_csv(dictionaryFile, names=['word'])
@@ -16,25 +16,12 @@ def getBoringScores(words):
     return boringScore.join(words), charProbs
 
 def stepWordTable(tbl, include=[], exclude=[], inplace=[], guess=None):
-    conds = ~tbl.word.isna()
-    
-    # Includes
-    for c in include:
-        conds &= tbl.word.str.contains(c)
-    
-    # Excludes
-    if len(exclude) > 0:
-        conds &= ~tbl.word.str.contains(f"[{''.join(exclude)}]")
-    
-    # In place
-    for i,c in enumerate(inplace):
-        if c is None:
-            continue
-        conds &= tbl.word.str[i] == c
-
-    # Drop guess
-    if guess is not None:
-        conds &= ~tbl.word.str.match(guess)
+    conds = tbl.word.apply(lambda word: \
+            all([c in word for c in include]) and \
+            not bool(re.search(f"[{''.join(exclude)}]", word)) and \
+            all([c is None or c == w for c,w in zip(inplace, word)]) and \
+            word != guess
+        )
 
     return tbl.where(conds).dropna(), (~conds).sum()
 
